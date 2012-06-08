@@ -120,3 +120,21 @@ def getinstfreq(imfs):
         omega[i,:]=diff(theta)
         
     return omega
+
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    import numpy as np
+    data = np.load("pore_test.npy")
+    imfs = emd(data,5)
+    plt.plot(data)
+    plt.subplot(511)
+    plt.plot(imfs[0])
+    plt.subplot(512)
+    plt.plot(imfs[1])
+    plt.subplot(513)
+    plt.plot(imfs[2])
+    plt.subplot(514)
+    plt.plot(imfs[3])
+    plt.subplot(515)
+    plt.plot(imfs[4])
+    plt.show()

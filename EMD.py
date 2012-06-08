@@ -7,7 +7,7 @@ To do:
 import numpy as np
 from scipy import interpolate
 
-__all__ = 'EMD'
+__all__ = 'emd'
 
 def emd(data, extrapolation='mirror', nimfs=12, shifting_distance=0.2):
     """
@@ -25,7 +25,7 @@ def emd(data, extrapolation='mirror', nimfs=12, shifting_distance=0.2):
     Parameters
     ----------
     data : array_like
-            Signal Data
+            Signal Data 1-D array.
     extrapolation : str, optional
             Sets the extrapolation method for edge effects. 
             Options: None
@@ -98,7 +98,7 @@ def emd(data, extrapolation='mirror', nimfs=12, shifting_distance=0.2):
         "Please Specifiy extrapolation keyword as None or 'mirror'")
             
     for j in nimfs:
-#       Extract at most nimfs IMFs no more IMFs to be found when Finish is True
+        # Extract at most nimfs IMFs no more IMFs to be found if Finish is True
         k = 0
         sd = 1.
         finish = False
@@ -131,10 +131,9 @@ def emd(data, extrapolation='mirror', nimfs=12, shifting_distance=0.2):
                 if len(max_env) < 4:
                     order_max = 1 #Do linear interpolation if not enough points
                 
-#==============================================================================
-# Mirror Method requires per flag = 1 No extrapolation requires per flag = 0
-# This is set in intial setup at top of function.
-#==============================================================================
+                # Mirror Method requires per flag = 1 
+                # No extrapolation requires per flag = 0
+                # This is set in intial setup at top of function.
                 t = interpolate.splrep(min_env, signals[min_env,0],
                                        k=order_min, per=inter_per)
                 top = interpolate.splev(

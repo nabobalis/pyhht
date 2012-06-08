@@ -5,23 +5,23 @@ import numpy as np
 import EMD
 
 # Signal creation
-#base = np.linspace(0,5000,1000)
-#a = 50. * np.sin(base/180.) 
-#b = 100. * np.sin(base/300.)
-#period = (base[1]-base[0])/60.
-#int_data = area_data = a + b + 50.*np.random.random(len(base))
+base = np.linspace(0,5000,1000)
+a = 50. * np.sin(base/180.) 
+b = 100. * np.sin(base/300.)
+period = (base[1]-base[0])/60.
+int_data = area_data = a + b + 5.*np.random.random(len(base))
 
 #    # Real data
 #int_data = np.load('/home/nabobalis/Dropbox/Int_red130.npy')
 #area_data = np.load('/home/nabobalis/Dropbox/Area_red130.npy')
-int_data = np.load('/home/stuart/Documents/Ellerman_data/IBIS/Int_red130.npy')
-area_data = np.load('/home/stuart/Documents/Ellerman_data/IBIS/Area_red130.npy')    
-ind = 3801
-fin = np.isfinite(int_data[ind,:])
-int_data = int_data[ind,:][fin]    
-area_data = area_data[ind,:][fin]
-time = (np.arange(0,len(int_data))*26.9)/60.
-period = 26.9 / 60.
+#int_data = np.load('/home/stuart/Documents/Ellerman_data/IBIS/Int_red130.npy')
+#area_data = np.load('/home/stuart/Documents/Ellerman_data/IBIS/Area_red130.npy')    
+#ind = 1
+#fin = np.isfinite(int_data[ind,:])
+#int_data = int_data[ind,:][fin]    
+#area_data = area_data[ind,:][fin]
+#time = (np.arange(0,len(int_data))*26.9)/60.
+#period = 26.9 / 60.
 
 # Calls our EMD!    
 imfs_area = EMD.emd(area_data,extrapolation='mirror')
@@ -61,7 +61,7 @@ for i in np.arange(0,ncomp):
         tl.set_color('b')
     ax1.set_xlabel("Frame Number")
 #plt.show()
-
+plt.tight_layout()
 # Signal Recreation
 print "-------------------------------------"    
 print 'Difference between the signal and the EMD'

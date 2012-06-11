@@ -124,12 +124,20 @@ def emd(data, extrapolation='mirror', nimfs=12, shifting_distance=0.2):
             if len(min_env) < 2 or len(max_env) < 2:
                 #If this IMF has become a straight line
                 finish = True
-            else:
+            else:             
                 if len(min_env) < 4:
                     order_min = 1 #Do linear interpolation if not enough points
+                elif len(min_env) < 5:
+                    order_min = 2 #Do quad interpolation if not enough points
+                else:
+                    order_min = 3
                     
                 if len(max_env) < 4:
-                    order_max = 1 #Do linear interpolation if not enough points
+                    order_max = 1  #Do linear interpolation if not enough points
+                elif len(max_env) < 5:
+                    order_max = 2 #Do quad interpolation if not enough points
+                else:
+                    order_max = 3
                 
                 # Mirror Method requires per flag = 1 
                 # No extrapolation requires per flag = 0
@@ -143,6 +151,7 @@ def emd(data, extrapolation='mirror', nimfs=12, shifting_distance=0.2):
                                        k=order_max, per=inter_per)
                 bot = interpolate.splev(
                                     np.arange(len(signals[:,0])), b)
+                
                 
             #Calculate the Mean and remove from the data set.
             mean = (top + bot)/2

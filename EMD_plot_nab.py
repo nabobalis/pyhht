@@ -4,25 +4,28 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as tick
 import numpy as np
 from scipy.io import readsav as idlread
-import EMD
+import EMD_nab as EMD
 
 # Signal creation
-base = np.linspace(0,5000,1000)
-a = 50. * np.sin(base/18.) 
+base = np.linspace(0,10000,10000)
+a = 50. * np.sin(base/15.) 
 b = 100. * np.sin(base/30.)
+c = 75 * np.sin(base/45)
+d = 90 * np.sin(base/60)
+e = 100 * np.sin(base/5)
 period = (base[1]-base[0])/60.
-int_data = area_data = a + b #+ 5.*np.random.random(len(base))
-time = np.arange(0,len(base)*period,period)
+int_data = area_data = a + b + c + d + e #+ 50 * np.random.rand(len(base))
+time = np.linspace(0,len(base)*period,len(base))
 
 # Real data
 #int_data = np.load('/home/nabobalis/Dropbox/Int_red130.npy')
 #area_data = np.load('/home/nabobalis/Dropbox/Area_red130.npy')
 #int_data = area_data = np.loadtxt('/home/nabobalis/Dropbox/Shared/Lyapdata.csv', delimiter=',')
-#int_data = np.load('/home/stuart/Documents/Ellerman_data/IBIS/Int_red130.npy')
-#area_data = np.load('/home/stuart/Documents/Ellerman_data/IBIS/Area_red130.npy')    
+#int_data = np.load("/home/nabobalis/Dropbox/Shared/Python/EB_587_red_int.npy")
+#area_data = np.load("/home/nabobalis/Dropbox/Shared/Python/EB_587_red_area.npy")    
 #ind = 3801
-#fin = np.isfinite(int_data[ind,:])
-#int_data = int_data[ind,:][fin]    
+#fin = np.isfinite(int_data)
+#int_data = int_data[ind,:][fin]
 #area_data = area_data[ind,:][fin]
 #period = 26.9 / 60. # 1. 
 
@@ -73,7 +76,7 @@ for i in np.arange(0,ncomp):
         tl.set_color('b')
 #    ax1.set_xlabel("Frame Number")
     ax1.set_xlabel("Time [Minutes]")
-plt.show()
+#plt.show()
 
 # Signal Recreation
 print "-------------------------------------"    
@@ -99,7 +102,7 @@ for tl in ax1.get_yticklabels():
     tl.set_color('r')
 for tl in ax2.get_yticklabels():
     tl.set_color('b')
-plt.show()
+#plt.show()
 
 # FFT Analysis
 plt.figure(figsize=(16, 10), dpi=80, facecolor='w', edgecolor='k')

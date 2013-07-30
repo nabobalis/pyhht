@@ -6,9 +6,9 @@ To do:
     Hilbert-Huang Transform
 """
 import numpy as np
+from sklearn.svm import SVR
 from scipy import interpolate
 import matplotlib.pyplot as plt
-import peakdetect as pd
 
 __all__ = 'emd'
 
@@ -55,6 +55,18 @@ def peak(data):
         last = min_env[-1]   
 
     return min_env,max_env,first,last
+
+def predict(data):
+    svr_rbf = SVR(kernel='rbf', C=1e3, gamma=0.1)
+    X = np.linspace(0,data.size,data.size)[:,None]
+    start = np.linspace(-data.size*0.1,0,100)[:,None]
+    end = np.linspace(data.size,data.size+data.size*0.1,100)[:,None]
+    test_start = svr_rbf.fit(X, data).predict(start)
+    test_end = svr_rbf.fit(X, data).predict(end)
+    plt.plot(start)
+    plt.plot(end)
+    plt.show()
+    return test_start, test_end
     
 def mirror_extrema_spline(data):
     """
@@ -167,20 +179,35 @@ def emd(data, nimfs=12, shifting_distance=0.2):
         return IMFs[:,0:ncomp]
         
 if __name__=="__main__":
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from scipy import interpolate
-    import peakdetect as pd
     
     basis = np.linspace(0,5000,1000)
     a = 50. * np.sin(basis/18.) 
     b = 100. * np.sin(basis/30.)
     period = (basis[1]-basis[0])/60.
-    data = int_data = area_data = a + b + 400 * np.random.rand(1000)
+    nose = 10 * np.random.rand(1000)
+    data = int_data = area_data = a + b
+    data_nose = data + nose
+    data_nose -= np.mean(data_nose)
     time = np.arange(0,len(basis)*period,period)
     
 #    min_env,max_env,first,last = peak(data)
 #    plt.plot(time,data)
 #    plt.plot(time[min_env],data[min_env],'ro')
 #    plt.plot(time[max_env],data[max_env],'bo')
-    aaa = emd(data)
+#    aaa = emd(data)
+    
+    svr_rbf = SVR(kernel='rbf', C=100000, gamma=0.01,cache_size=2500,verbose=True)
+    X = np.linspace(0,data.size,data.size)[:,None]
+    y_rbf = svr_rbf.fit(X[100:200], data_nose[100:200]).predict(X[0:200])
+    y_rbf_1 = svr_rbf.fit(X[-300:-100], data_nose[-300:-100]).predict(X[-100:])
+#    start = np.linspace(-data.size*0.1,0,100)[:,None]
+#    end = np.linspace(data.size,data.size+data.size*0.1,100)[:,None]
+#    test_start = svr_rbf.fit(X, data).predict(start)
+#    test_end = svr_rbf.fit(X, data).predict(end)
+#    plt.plot(start)
+#    plt.plot(end)
+    plt.plot(data,'k+')
+    plt.plot(y_rbf, 'b-_')
+    plt.plot(X[-100:],y_rbf_1, 'b-_')
+    plt.plot(data_nose, 'r-')
+    plt.show()

@@ -12,26 +12,26 @@ from matplotlib.pyplot import plot,show,imshow,colorbar,subplot,grid
 def envlps(f):
     x=zeros((len(f),),dtype=int)
     y=x.copy()
-    
+
     for i in range(1,len(f)-1):
         if (f[i]>f[i-1])&(f[i]>f[i+1]):
             x[i]=1
         if (f[i]<f[i-1])&(f[i]<f[i+1]):
             y[i]=1
-    
+
     x=(x>0).nonzero()
     y=(y>0).nonzero()
     y=y[0]
     x=x[0]
     x=hstack((0,x,len(f)-1))
     y=hstack((0,y,len(f)-1))
-    
+
     t=splrep(x,f[x])
     # numpy.arange
     top=splev(array(range(len(f))),t)
     t=splrep(y,f[y])
     bot=splev(array(range(len(f))),t)
-    
+
     return top,bot
 
 def sift(t):
@@ -42,13 +42,13 @@ def sift(t):
 def localmean(t):
     top,bot=envlps(t)
     return (top+bot)/2
-    
+
 
 def checkimf(t):
-    
+
     xtrm=zeros((len(t),),dtype=int)
     zcross=xtrm.copy()
-    
+
     for i in range(1,len(t)-1):
         if (t[i]>t[i-1])&(t[i]>t[i+1]):
             xtrm[i]=1
@@ -56,13 +56,13 @@ def checkimf(t):
             xtrm[i]=1
         if t[i-1]*t[i+1]<0:
             zcross[i]=1
-            
-    
+
+
     a=(xtrm>0).nonzero()
     b=(zcross>0).nonzero()
-    
+
     return abs(len(a[0])-len(b[0]))
-    
+
 def siftrun(t,n):
     d=checkimf(t)
     iters=0
@@ -73,7 +73,7 @@ def siftrun(t,n):
         if iters==n:
             break
     return t
-    
+
 def emd(f,n):
     imfs=zeros((1,len(f)),dtype=float)
     for i in range(n):
@@ -89,13 +89,13 @@ def demoinit():
     Fs,f=read('sare.wav')
     f=f[30000:31001]
     return Fs,f
-    
+
 def plothilbert(imfs):
     for i in range(imfs.shape[0]):
         h=hilbert(imfs[i,:])
         plot(real(h),imag(h))
     show()
-    
+
 def symmetrydemo():
     a=sin(linspace(-5*pi,5*pi,10000))
     b=a+2
@@ -110,7 +110,7 @@ def symmetrydemo():
     grid()
     show()
     return a,b,c
-    
+
 
 def getinstfreq(imfs):
     omega=zeros((imfs.shape[0],imfs.shape[1]-1),dtype=float)
@@ -118,14 +118,19 @@ def getinstfreq(imfs):
         h=hilbert(imfs[i,:])
         theta=unwrap(angle(h))
         omega[i,:]=diff(theta)
-        
+
     return omega
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     import numpy as np
-    data = np.load("pore_test.npy")
-    imfs = emd(data,5)
+    base = np.linspace(0,5000,1000)
+    a = 50. * np.sin(base/18.)
+    b = 100. * np.sin(base/30.)
+    period = (base[1]-base[0])/60.
+    data = a + b #+ 5.*np.random.random(len(base))
+    time = np.arange(0,len(base)*period,period)
+    imfs = emd(data,12)
     plt.plot(data)
     plt.subplot(511)
     plt.plot(imfs[0])

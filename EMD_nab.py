@@ -5,6 +5,7 @@ To do:
     Instanous freequncuies
     Hilbert-Huang Transform
 """
+from __future__ import division
 import numpy as np
 from sklearn.svm import SVR
 from scipy import interpolate
@@ -70,7 +71,8 @@ def peak_para(data):
         tp = - b / (2*a)
         if tp <= 2.5 and tp >= 1.5:
             xpoints.append(i-2+tp)
-            ypoints.append(-b*tp/2 + c)
+#            ypoints.append(-b*(tp)/2 + c) # WRONG BUT FROM THE PAPER
+            ypoints.append(a*(2)**2 + b*(2)+c) # "SOLVES" A PARABOLIC EQN FOR Y - SEEMS TO BE WRITE
             if a < 0:
                 points.append('max')
             if a > 0:
@@ -207,39 +209,10 @@ if __name__=="__main__":
     b = 100. * np.sin(basis/30.)
     period = (basis[1]-basis[0])/60.
     nose = 100 * np.random.rand(1000)
-    data = int_data = area_data = a + b
+    data = int_data = area_data = a + b + nose
     data_nose = data + nose
     data_nose -= np.mean(data_nose)
     time = np.arange(0,len(basis)*period,period)
     data -= np.mean(data)
 
-#    plt.plot(time,data,'o')
-
     xpoints, ypoints, cc = peak_para(data)
-
-    plt.plot(time,data/np.max(data))
-    xx = np.around(xpoints).astype(np.int)
-    plt.plot(time[xx],data[ypoints]/np.max(data),'o') #ypoints/np.max(ypoints)
-#    yp =
-#    min_env,max_env,first,last = peak(data)
-#    plt.plot(time,data)
-#    plt.plot(time[min_env],data[min_env],'ro')
-#    plt.plot(time[max_env],data[max_env],'bo')
-#    aaa = emd(data)
-#    paper_kernel = lambda x, y:  np.matrix([np.exp(0.5 * (x - y)**2 / 0.5**2)][:,None])
-#    svr_rbf = SVR(kernel='rbf', C=100000, gamma=0.01, cache_size=2500,verbose=True)
-#    svr_rbf = SVR(kernel=paper_kernel, cache_size=2500,verbose=True)
-#    X = np.linspace(0,data.size,data.size)[:,None]
-#    y_rbf = svr_rbf.fit(X[100:200], data_nose[100:200]).predict(X[0:200])
-#    y_rbf_1 = svr_rbf.fit(X[-300:-100], data_nose[-300:-100]).predict(X[-100:])
-#    start = np.linspace(-data.size*0.1,0,100)[:,None]
-#    end = np.linspace(data.size,data.size+data.size*0.1,100)[:,None]
-#    test_start = svr_rbf.fit(X, data).predict(start)
-#    test_end = svr_rbf.fit(X, data).predict(end)
-#    plt.plot(start)
-#    plt.plot(end)
-#    plt.plot(data,'k+')
-#    plt.plot(y_rbf, 'b-_')
-#    plt.plot(X[-100:],y_rbf_1, 'b-_')
-#    plt.plot(data_nose, 'r-')
-#    plt.show()

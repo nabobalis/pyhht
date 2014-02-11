@@ -5,9 +5,7 @@ To do:
     Hilbert-Huang Transform
 """
 import numpy as np
-from sklearn.svm import SVR
 from scipy import interpolate
-import matplotlib.pyplot as plt
 
 __all__ = 'emd'
 

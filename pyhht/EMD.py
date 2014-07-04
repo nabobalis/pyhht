@@ -7,9 +7,9 @@ To do:
 import numpy as np
 from scipy import interpolate
 
-__all__ = 'emd'
+__all__ = ['emd']
 
-def emd(data, extrapolation='mirror', nimfs=12, shifting_distance=0.2):
+def emd(data, extrapolation=None, nimfs=12, shifting_distance=0.2):
     """
     Perform a Empirical Mode Decomposition on a data set.
 

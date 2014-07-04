@@ -3,7 +3,7 @@ from __future__ import division
 import matplotlib.pyplot as plt
 import matplotlib.ticker as tick
 import numpy as np
-import EMD
+from pyhht.EMD import emd
 
 # Signal creation
 base = np.linspace(0,5000,1000)
@@ -14,8 +14,8 @@ int_data = area_data = a + b #+ 5.*np.random.random(len(base))
 time = np.arange(0,len(base)*period,period)
 
 # Calls our EMD!
-imfs_area = EMD.emd(area_data)
-imfs_int = EMD.emd(int_data)
+imfs_area = emd(area_data)
+imfs_int = emd(int_data)
 ncomp = imfs_int.shape[1]
 ncomp1 = imfs_area.shape[1]
 

@@ -9,7 +9,7 @@ from scipy import interpolate
 
 __all__ = ['emd']
 
-def emd(data, extrapolation=None, nimfs=12, shifting_distance=0.2):
+def emd(data, extrapolation=None, n=1, nimfs=12, shifting_distance=0.2):
     """
     Perform a Empirical Mode Decomposition on a data set.
 
@@ -21,6 +21,9 @@ def emd(data, extrapolation=None, nimfs=12, shifting_distance=0.2):
     routine as described in [2]_ as well as the standard spline routine.
     The extrapolation method removes the artifacts introduced by the spline fit
     at the ends of the data set, by making the dataset a continuious circle.
+    
+    Many thousands of papers have been published with ideas to improve the EMD 
+    procress. One is paper [3]_, that is used for the exterma mirror.
 
     Parameters
     ----------
@@ -30,8 +33,10 @@ def emd(data, extrapolation=None, nimfs=12, shifting_distance=0.2):
             Sets the extrapolation method for edge effects.
             Options: None
                      'mirror'
-                     'TBA'
+                     'extrema'
             Default: 'mirror'
+    n: int, optional
+            Sets the number of points used for the exterma mirror method.
     nimfs : int, optional
             Sets the maximum number of IMFs to be found
             Default : 12
@@ -64,7 +69,7 @@ def emd(data, extrapolation=None, nimfs=12, shifting_distance=0.2):
     #Set up signals array and IMFs array based on type of extrapolation
     # No extrapolation and 'extend' use signals array which is len(data)
     # Mirror extrapolation (Zhao 2001) uses a signal array len(2*data)
-    if not(extrapolation):
+    if extrapolation == None or extrapolation == 'extrema':
         base = len(data)
         signals = np.zeros([base, 2])
         nimfs = range(nimfs) # Max number of IMFs
@@ -96,7 +101,7 @@ def emd(data, extrapolation=None, nimfs=12, shifting_distance=0.2):
 
     else:
         raise Exception(
-        "Please Specifiy extrapolation keyword as None or 'mirror'")
+        "Please Specifiy extrapolation keyword or None")
 
     for j in nimfs:
         # Extract at most nimfs IMFs no more IMFs to be found if Finish is True
@@ -117,10 +122,14 @@ def emd(data, extrapolation=None, nimfs=12, shifting_distance=0.2):
             max_env[-1] = min_env[0] = False
             min_env = min_env.nonzero()[0]
             max_env = max_env.nonzero()[0]
+            
+            signal_min = signals[min_env,0]
+            signal_max = signals[max_env,0]
+    
             #Cubic Spline by default
             order_max = 3
             order_min = 3
-
+            
             if len(min_env) < 2 or len(max_env) < 2:
                 #If this IMF has become a straight line
                 finish = True
@@ -138,16 +147,43 @@ def emd(data, extrapolation=None, nimfs=12, shifting_distance=0.2):
                     order_max = 2 #Do quad interpolation if not enough points
                 else:
                     order_max = 3
-
+                    
+                min_arr = np.array([min_env, signal_min])
+                max_arr = np.array([max_env, signal_max])
+                    
+                if  extrapolation == 'extrema':
+                    num = range(1, n+1)
+                                   
+                    left_min = np.zeros([2,n])
+                    right_min = np.zeros([2, n])
+                    
+                    left_max = np.zeros([2,n])
+                    right_max = np.zeros([2, n])
+                    
+                    for i in num:
+                        left_max[:, i-1] = [-1*min_env[n-i], signal_max[n-i]]
+                        left_min[:, i-1] = [-1*max_env[n-i], signal_min[n-i]]
+                        
+                        right_max[:, i-1] = [(base - min_env[-i]) + base, signal_max[-i]]
+                        right_min[:, i-1] = [(base - max_env[-i]) + base, signal_min[-i]]
+                    
+                        
+                    min_arr = np.concatenate([left_min, min_arr, right_min], axis=1)
+                    max_arr = np.concatenate([left_max, max_arr, right_max], axis=1)
+                else:
+                    min_arr = np.array([min_env, signal_min])
+                    max_arr = np.array([max_env, signal_max])
+                    
+                
                 # Mirror Method requires per flag = 1
                 # No extrapolation requires per flag = 0
                 # This is set in intial setup at top of function.
-                t = interpolate.splrep(min_env, signals[min_env,0],
+                t = interpolate.splrep(*min_arr,
                                        k=order_min, per=inter_per)
                 top = interpolate.splev(
                                     np.arange(len(signals[:,0])), t)
 
-                b = interpolate.splrep(max_env, signals[max_env,0],
+                b = interpolate.splrep(*max_arr,
                                        k=order_max, per=inter_per)
                 bot = interpolate.splev(
                                     np.arange(len(signals[:,0])), b)
@@ -173,7 +209,7 @@ def emd(data, extrapolation=None, nimfs=12, shifting_distance=0.2):
             ncomp += 1
             break
 
-        if not(extrapolation):
+        if extrapolation == None or extrapolation == 'extrema':
             IMFs[:,j] = signals[:,0]
             residual = residual - IMFs[:,j]#For j==0 residual is initially data
             signals[:,0] = residual

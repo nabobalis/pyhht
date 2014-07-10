@@ -13,9 +13,10 @@ period = (base[1]-base[0])/60.
 int_data = area_data = a + b #+ 5.*np.random.random(len(base))
 time = np.arange(0,len(base)*period,period)
 
+plt.plot(time,area_data)
 # Calls our EMD!
-imfs_area = emd(area_data)
-imfs_int = emd(int_data)
+imfs_area = emd(area_data,extrapolation='extrema')
+imfs_int = emd(int_data,extrapolation='extrema')
 ncomp = imfs_int.shape[1]
 ncomp1 = imfs_area.shape[1]
 

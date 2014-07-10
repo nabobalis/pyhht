@@ -62,8 +62,6 @@ def emd(data, extrapolation=None, n=1, nimfs=12, shifting_distance=0.2):
 
     .. [3] Rato R.T., Ortigueira M.D., Batista A.G 2008 'On the HHT, its problems, and some solutions.'
     Mechanical Systems and Signal Processing 22 1374-1394
-
-
     """
 
     #Set up signals array and IMFs array based on type of extrapolation

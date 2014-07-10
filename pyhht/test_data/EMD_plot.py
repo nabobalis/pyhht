@@ -10,10 +10,9 @@ base = np.linspace(0,5000,1000)
 a = 50. * np.sin(base/18.)
 b = 100. * np.sin(base/30.)
 period = (base[1]-base[0])/60.
-int_data = area_data = a + b #+ 5.*np.random.random(len(base))
+int_data = area_data = a + b + 5.*np.random.random(len(base))
 time = np.arange(0,len(base)*period,period)
 
-plt.plot(time,area_data)
 # Calls our EMD!
 imfs_area = emd(area_data,extrapolation='extrema')
 imfs_int = emd(int_data,extrapolation='extrema')

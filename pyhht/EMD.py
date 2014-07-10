@@ -30,6 +30,7 @@ def emd(data, extrapolation=None, nimfs=12, shifting_distance=0.2):
             Sets the extrapolation method for edge effects.
             Options: None
                      'mirror'
+                     'TBA'
             Default: 'mirror'
     nimfs : int, optional
             Sets the maximum number of IMFs to be found
@@ -108,15 +109,14 @@ def emd(data, extrapolation=None, nimfs=12, shifting_distance=0.2):
             max_env = min_env.copy()
 
             min_env = np.logical_and(
+                    np.r_[True, signals[1:,0] < signals[:-1,0]],
+                    np.r_[signals[:-1,0] < signals[1:,0], True])
+            max_env = np.logical_and(
                                 np.r_[True, signals[1:,0] > signals[:-1,0]],
                                 np.r_[signals[:-1,0] > signals[1:,0], True])
-            max_env = np.logical_and(
-                                np.r_[True, signals[1:,0] < signals[:-1,0]],
-                                np.r_[signals[:-1,0] < signals[1:,0], True])
-            max_env[0] = max_env[-1] = False
+            max_env[-1] = min_env[0] = False
             min_env = min_env.nonzero()[0]
             max_env = max_env.nonzero()[0]
-
             #Cubic Spline by default
             order_max = 3
             order_min = 3

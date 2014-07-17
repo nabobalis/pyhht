@@ -6,11 +6,11 @@ import numpy as np
 from pyhht.EMD import emd
 
 # Signal creation
-base = np.linspace(0,5000,1000)
-a = 50. * np.sin(base/18.)
-b = 100. * np.sin(base/30.)
-period = (base[1]-base[0])/60.
-int_data = area_data = a + b + 5.*np.random.random(len(base))
+base = np.linspace(0,1000,1000)
+a = 0.5 * np.sin(2*np.pi*base/18)
+b = 1 * np.sin(2*np.pi*base/30)
+period = (base[1]-base[0])
+int_data = area_data = a + b #+ 5.*np.random.random(len(base))
 time = np.arange(0,len(base)*period,period)
 
 # Calls our EMD!

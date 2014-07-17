@@ -6,10 +6,12 @@ To do:
 """
 import numpy as np
 from scipy import interpolate
+from scipy.stats import pearsonr
 
 __all__ = ['emd']
 
-def emd(data, extrapolation=None, n=1, nimfs=12, shifting_distance=0.2):
+def emd(data, nimfs=12, extrapolation=None, n=1, stopping=None, 
+        shifting_distance=0.2, pearson=True, res=40):
     """
     Perform a Empirical Mode Decomposition on a data set.
 
@@ -40,10 +42,16 @@ def emd(data, extrapolation=None, n=1, nimfs=12, shifting_distance=0.2):
     nimfs : int, optional
             Sets the maximum number of IMFs to be found
             Default : 12
+    stopping: string, optional,
+            Sets the method used to stop the sifting process.
+            None: Standard EMD equation .....
+            TBA1: Second standard EMD equation ....
+            resoultion: comes from ref [3]_. Need to set the parmeter res!
     shifiting_distance : float, optional
             Sets the minimum variance between IMF iterations.
             Default : 0.2
-
+    res : float, optional
+        stuff from ref [3]_      it is in dB  
     Returns
     -------
     IMFs : ndarray
@@ -128,7 +136,7 @@ def emd(data, extrapolation=None, n=1, nimfs=12, shifting_distance=0.2):
             order_max = 3
             order_min = 3
             
-            if len(min_env) < 2 or len(max_env) < 2:
+            if len(min_env) <= 2 or len(max_env) <= 2:
                 #If this IMF has become a straight line
                 finish = True
             else:
@@ -189,7 +197,11 @@ def emd(data, extrapolation=None, n=1, nimfs=12, shifting_distance=0.2):
 
             #Calculate the Mean and remove from the data set.
             mean = (top + bot)/2
-            signals[:,1] = signals[:,0] - mean
+            if not(pearson):
+                alpha = 1
+            else:
+                alpha = pearsonr(signals[:,0],mean)[0]
+            signals[:,1] = signals[:,0] - alpha*mean
 
             #Calculate the shifting distance which is a measure of
             #simulartity to previous IMF

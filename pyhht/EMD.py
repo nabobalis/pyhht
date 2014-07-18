@@ -10,8 +10,8 @@ from scipy.stats import pearsonr
 
 __all__ = ['emd']
 
-def emd(data, nimfs=12, extrapolation=None, n=1, stopping=None, 
-        shifting_distance=0.2, pearson=True, res=40):
+def emd(data, nimfs=12, extrapolation=None, n=1, stopping=None,
+        shifting_distance=0.2, pearson=False, res=40):
     """
     Perform a Empirical Mode Decomposition on a data set.
 
@@ -23,8 +23,8 @@ def emd(data, nimfs=12, extrapolation=None, n=1, stopping=None,
     routine as described in [2]_ as well as the standard spline routine.
     The extrapolation method removes the artifacts introduced by the spline fit
     at the ends of the data set, by making the dataset a continuious circle.
-    
-    Many thousands of papers have been published with ideas to improve the EMD 
+
+    Many thousands of papers have been published with ideas to improve the EMD
     procress. One is paper [3]_, that is used for the exterma mirror.
 
     Parameters
@@ -51,7 +51,7 @@ def emd(data, nimfs=12, extrapolation=None, n=1, stopping=None,
             Sets the minimum variance between IMF iterations.
             Default : 0.2
     res : float, optional
-        stuff from ref [3]_      it is in dB  
+        stuff from ref [3]_      it is in dB
     Returns
     -------
     IMFs : ndarray
@@ -62,13 +62,16 @@ def emd(data, nimfs=12, extrapolation=None, n=1, stopping=None,
 
     References
     ----------
-    .. [1] Huang H. et al. 1998 'The empirical mode decomposition and the Hilbert spectrum for nonlinear and non-stationary time series analysis.'
+    .. [1] Huang H. et al. 1998 'The empirical mode decomposition and the
+    Hilbert spectrum for nonlinear and non-stationary time series analysis.'
     Procedings of the Royal Society 454, 903-995
 
-    .. [2] Zhao J., Huang D. 2001 'Mirror extending and circular spline function for empirical mode decomposition method'
+    .. [2] Zhao J., Huang D. 2001 'Mirror extending and circular spline
+    function for empirical mode decomposition method'
     Journal of Zhejiang University (Science) V.2, No.3,P247-252
 
-    .. [3] Rato R.T., Ortigueira M.D., Batista A.G 2008 'On the HHT, its problems, and some solutions.'
+    .. [3] Rato R.T., Ortigueira M.D., Batista A.G 2008 'On the HHT,
+    its problems, and some solutions.'
     Mechanical Systems and Signal Processing 22 1374-1394
     """
 
@@ -112,10 +115,10 @@ def emd(data, nimfs=12, extrapolation=None, n=1, stopping=None,
     for j in nimfs:
         # Extract at most nimfs IMFs no more IMFs to be found if Finish is True
         k = 0
-        sd = 1.
+        sd = np.array([1])
         finish = False
 
-        while sd > shifting_distance and not(finish):
+        while sd.any() > shifting_distance and not(finish):
             min_env = np.zeros(base)
             max_env = min_env.copy()
 
@@ -128,14 +131,14 @@ def emd(data, nimfs=12, extrapolation=None, n=1, stopping=None,
             max_env[-1] = min_env[0] = False
             min_env = min_env.nonzero()[0]
             max_env = max_env.nonzero()[0]
-            
+
             signal_min = signals[min_env,0]
             signal_max = signals[max_env,0]
-    
+
             #Cubic Spline by default
             order_max = 3
             order_min = 3
-            
+
             if len(min_env) <= 2 or len(max_env) <= 2:
                 #If this IMF has become a straight line
                 finish = True
@@ -153,34 +156,34 @@ def emd(data, nimfs=12, extrapolation=None, n=1, stopping=None,
                     order_max = 2 #Do quad interpolation if not enough points
                 else:
                     order_max = 3
-                    
+
                 min_arr = np.array([min_env, signal_min])
                 max_arr = np.array([max_env, signal_max])
-                    
+
                 if  extrapolation == 'extrema':
                     num = range(1, n+1)
-                                   
+
                     left_min = np.zeros([2,n])
                     right_min = np.zeros([2, n])
-                    
+
                     left_max = np.zeros([2,n])
                     right_max = np.zeros([2, n])
-                    
+
                     for i in num:
                         left_max[:, i-1] = [-1*min_env[n-i], signal_max[n-i]]
                         left_min[:, i-1] = [-1*max_env[n-i], signal_min[n-i]]
-                        
+
                         right_max[:, i-1] = [(base - min_env[-i]) + base, signal_max[-i]]
                         right_min[:, i-1] = [(base - max_env[-i]) + base, signal_min[-i]]
-                    
-                        
+
+
                     min_arr = np.concatenate([left_min, min_arr, right_min], axis=1)
                     max_arr = np.concatenate([left_max, max_arr, right_max], axis=1)
                 else:
                     min_arr = np.array([min_env, signal_min])
                     max_arr = np.array([max_env, signal_max])
-                    
-                
+
+
                 # Mirror Method requires per flag = 1
                 # No extrapolation requires per flag = 0
                 # This is set in intial setup at top of function.
@@ -206,9 +209,11 @@ def emd(data, nimfs=12, extrapolation=None, n=1, stopping=None,
             #Calculate the shifting distance which is a measure of
             #simulartity to previous IMF
             if k > 0:
-                sd = (np.sum((np.abs(signals[:,0] - signals[:,1])**2))
-                             / (np.sum(signals[:,0]**2)))
-
+                if stopping == 'sum_sd':
+                    sd = (np.sum((np.abs(signals[:,0] - signals[:,1])**2))
+                                 / (np.sum(signals[:,0]**2)))
+                else:
+                    sd = np.abs(signals[:,0])
             #Set new iteration as previous and loop
             signals = signals[:,::-1]
             k += 1

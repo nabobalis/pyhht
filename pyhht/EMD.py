@@ -7,14 +7,13 @@ from scipy.stats import pearsonr
 
 __all__ = ['emd']
 
-def exterma(data, extenstion='extrema'):
+def exterma(data, extenstion='extrema', n=2):
     """
     Takes an 1D array and finds exterma points.
     """
     N = data.shape[0]
     min_env = np.zeros(N)
     max_env = min_env.copy()
-
     min_env = np.logical_and(
             np.r_[True, data[1:] < data[:-1]],
             np.r_[data[:-1] < data[1:], True])
@@ -31,22 +30,22 @@ def exterma(data, extenstion='extrema'):
     min_arr = np.array([min_env, data_min])
     max_arr = np.array([max_env, data_max])
 
-    if  extenstion == 'extrema':
-        num = range(1, N+1)
+    if min_env.shape[0] <= 2 or max_env.shape[0] <= 2:
+        #If this IMF has become a straight line
+        pass
+    elif  extenstion == 'extrema':
+        left_min = np.zeros([2,n])
+        right_min = np.zeros([2, n])
 
-        left_min = np.zeros([2,N])
-        right_min = np.zeros([2, N])
+        left_max = np.zeros([2,n])
+        right_max = np.zeros([2, n])
 
-        left_max = np.zeros([2,N])
-        right_max = np.zeros([2, N])
+        for i in range(1, n+1):
+            left_max[:, i-1] = [-1*min_env[n-i], data_max[n-i]]
+            left_min[:, i-1] = [-1*max_env[n-i], data_min[n-i]]
 
-        for i in num:
-            left_max[:, i-1] = [-1*min_env[N-i], data_max[N-i]]
-            left_min[:, i-1] = [-1*max_env[N-i], data_min[N-i]]
-
-            right_max[:, i-1] = [(N - min_env[-i]) + N, data_max[-i]]
-            right_min[:, i-1] = [(N - max_env[-i]) + N, data_min[-i]]
-
+            right_max[:, i-1] = [2*N - min_env[-i], data_max[-i]]
+            right_min[:, i-1] = [2*N - max_env[-i], data_min[-i]]
 
         min_arr = np.concatenate([left_min, min_arr, right_min], axis=1)
         max_arr = np.concatenate([left_max, max_arr, right_max], axis=1)
@@ -56,28 +55,27 @@ def exterma(data, extenstion='extrema'):
 
     return min_arr, max_arr
 
-def envelope(min_arr, max_arr, N, periodic=0):
+def envelope(min_arr, max_arr, N, n, periodic=0):
     #Cubic Spline by default
     order_max = 3
     order_min = 3
 
-    if len(min_arr) <= 2 or len(max_arr) <= 2:
-        #If this IMF has become a straight line
-        finish = True
-    else:
-        if len(min_arr) < 4:
-            order_min = 1 #Do linear interpolation if not enough points
-        elif len(min_arr) < 5:
-            order_min = 2 #Do quad interpolation if not enough points
-        else:
-            order_min = 3
+    min_arr = np.asarray(min_arr)
+    max_arr = np.asarray(max_arr)
 
-        if len(max_arr) < 4:
-            order_max = 1  #Do linear interpolation if not enough points
-        elif len(max_arr) < 5:
-            order_max = 2 #Do quad interpolation if not enough points
-        else:
-            order_max = 3
+    if min_arr.shape[1]-n < 4:
+        order_min = 1 #Do linear interpolation if not enough points
+    elif min_arr.shape[1]-n < 5:
+        order_min = 2 #Do quad interpolation if not enough points
+    else:
+        order_min = 3
+
+    if max_arr.shape[1]-n < 4:
+        order_max = 1  #Do linear interpolation if not enough points
+    elif max_arr.shape[1]-n < 5:
+        order_max = 2 #Do quad interpolation if not enough points
+    else:
+        order_max = 3
     # Mirror Method requires per flag = 1
     # No extrapolation requires per flag = 0
     t = interpolate.splrep(*min_arr, k=order_min, per=periodic)
@@ -87,10 +85,9 @@ def envelope(min_arr, max_arr, N, periodic=0):
     bot = interpolate.splev(np.arange(N), b)
     mean = (top + bot)/2
 
-    return mean, finish
+    return mean
 
-
-def emd(data, nimfs=12, extrapolation='exterma', n=1,
+def emd(data, nimfs=12, extrapolation='exterma', n=2,
         shifting_distance=0.2, pearson=True):
     """
     Perform a Empirical Mode Decomposition on a data set.
@@ -190,33 +187,39 @@ def emd(data, nimfs=12, extrapolation='exterma', n=1,
     for j in nimfs:
         # Extract at most nimfs IMFs no more IMFs to be found if Finish is True
         k = 0
-        sd = np.array([1])
+        sd = 10
         finish = False
 
-        while sd.any() > shifting_distance and not(finish):
+        while sd > shifting_distance and not(finish):
 
-            mean, finish = envelope(exterma(signals[:,0]),base, periodic)
+            #EMD magic here.
+            min_arr, max_arr = exterma(signals[:,0])
 
-            if not(pearson):
-                alpha = 1
+            if min_arr.shape[1] <= 2 or max_arr.shape[1] <= 2:
+                #If this IMF has become a straight line
+                finish = True
             else:
-                alpha = pearsonr(signals[:,0],mean)[0]
-            signals[:,1] = signals[:,0] - alpha*mean
+                mean = envelope(min_arr, max_arr, base, n, periodic)
 
-            #Calculate the shifting distance which is a measure of
-            #simulartity to previous IMF
-            if k > 0:
-                    sd = np.sum((np.abs(signals[:,0] - signals[:,1])**2)) / np.sum(signals[:,0]**2)
+                if not(pearson):
+                    alpha = 1
+                else:
+                    alpha = pearsonr(signals[:,0],mean)[0]
+                signals[:,1] = signals[:,0] - alpha*mean
 
-            #Set new iteration as previous and loop
-            signals = signals[:,::-1]
-            k += 1
+                #Calculate the shifting distance which is a measure of
+                #simulartity to previous IMF
+                if k > 0:
+                        sd = np.sum((np.abs(signals[:,0] - signals[:,1])**2)) / np.sum(signals[:,0]**2)
 
-        if finish:
-            #If IMF is a straight line we are done here.
-            IMFs[:,j]= residual
-            ncomp += 1
-            break
+                signals = signals[:,::-1]
+                k += 1
+
+            if finish:
+                #If IMF is a straight line we are done here.
+                IMFs[:,j]= residual
+                ncomp += 1
+                break
 
         if extrapolation == 'mirror':
             IMFs[:,j] = signals[data_length / 2:data_length
@@ -237,4 +240,4 @@ def emd(data, nimfs=12, extrapolation='exterma', n=1,
             signals[:,0] = residual
             ncomp += 1
 
-    return IMFs[:,0:ncomp]
+    return IMFs

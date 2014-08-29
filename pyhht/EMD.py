@@ -55,7 +55,7 @@ def exterma(data, extenstion='extrema', n=2):
 
     return min_arr, max_arr
 
-def envelope(min_arr, max_arr, N, n, periodic=0):
+def envelope(min_arr, max_arr, N, periodic=0):
     #Cubic Spline by default
     order_max = 3
     order_min = 3
@@ -63,16 +63,16 @@ def envelope(min_arr, max_arr, N, n, periodic=0):
     min_arr = np.asarray(min_arr)
     max_arr = np.asarray(max_arr)
 
-    if min_arr.shape[1]-n < 4:
+    if min_arr.shape[1] < 4:
         order_min = 1 #Do linear interpolation if not enough points
-    elif min_arr.shape[1]-n < 5:
+    elif min_arr.shape[1] < 5:
         order_min = 2 #Do quad interpolation if not enough points
     else:
         order_min = 3
 
-    if max_arr.shape[1]-n < 4:
+    if max_arr.shape[1] < 4:
         order_max = 1  #Do linear interpolation if not enough points
-    elif max_arr.shape[1]-n < 5:
+    elif max_arr.shape[1] < 5:
         order_max = 2 #Do quad interpolation if not enough points
     else:
         order_max = 3
@@ -87,7 +87,7 @@ def envelope(min_arr, max_arr, N, n, periodic=0):
 
     return mean
 
-def emd(data, nimfs=12, extrapolation='exterma', n=2,
+def emd(data, nimfs=12, extrapolation='mirror', n=2,
         shifting_distance=0.2, pearson=True):
     """
     Perform a Empirical Mode Decomposition on a data set.
@@ -181,13 +181,16 @@ def emd(data, nimfs=12, extrapolation='exterma', n=2,
         ncomp = 0
         residual = data
         signals[:, 0] = data
-        #Don't do spline fitting with periodic bounds
-        periodic = 0
+        if extrapolation=='exterma':
+            periodic = 1
+        else:
+            #Don't do spline fitting with periodic bounds
+            periodic = 0
 
     for j in nimfs:
         # Extract at most nimfs IMFs no more IMFs to be found if Finish is True
         k = 0
-        sd = 10
+        sd = 1
         finish = False
 
         while sd > shifting_distance and not(finish):
@@ -199,7 +202,7 @@ def emd(data, nimfs=12, extrapolation='exterma', n=2,
                 #If this IMF has become a straight line
                 finish = True
             else:
-                mean = envelope(min_arr, max_arr, base, n, periodic)
+                mean = envelope(min_arr, max_arr, base, periodic)
 
                 if not(pearson):
                     alpha = 1
@@ -215,13 +218,12 @@ def emd(data, nimfs=12, extrapolation='exterma', n=2,
                 signals = signals[:,::-1]
                 k += 1
 
-            if finish:
-                #If IMF is a straight line we are done here.
-                IMFs[:,j]= residual
-                ncomp += 1
-                break
-
-        if extrapolation == 'mirror':
+        if finish:
+            #If IMF is a straight line we are done here.
+            IMFs[:,j]= residual
+            ncomp += 1
+            break
+        elif extrapolation == 'mirror':
             IMFs[:,j] = signals[data_length / 2:data_length
                                                            + data_length / 2,0]
             residual = residual - IMFs[:,j]#For j==0 residual is initially data
@@ -233,11 +235,10 @@ def emd(data, nimfs=12, extrapolation='exterma', n=2,
             signals[data_length
                 + data_length / 2:,0] = residual[::-1][0:data_length / 2]
             ncomp += 1
-
         else:
             IMFs[:,j] = signals[:,0]
             residual = residual - IMFs[:,j]#For j==0 residual is initially data
             signals[:,0] = residual
             ncomp += 1
 
-    return IMFs
+    return IMFs[:, 0:ncomp]

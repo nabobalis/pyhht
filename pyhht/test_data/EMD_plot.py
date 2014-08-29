@@ -10,7 +10,7 @@ base = np.linspace(0,1000,1000)
 a = 0.5 * np.sin(2*np.pi*base/18)
 b = 1 * np.sin(2*np.pi*base/30)
 period = (base[1]-base[0])
-int_data = area_data = a + b #+ 5.*np.random.random(len(base))
+int_data = area_data = a + b + 0.5*np.random.random(len(base))
 time = np.arange(0,len(base)*period,period)
 
 # Calls our EMD!

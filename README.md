@@ -1,6 +1,7 @@
-#Retired due to finding [libeemd](https://bitbucket.org/luukko/libeemd).
+# Retired due to finding [libeemd](https://bitbucket.org/luukko/libeemd). 
+# Use that, its very good and it works. It has Pytohn and R bindings. 
 
-## [PyHHT]
+## PyHHT
 
 PyHHT is an open-source Python library will one day, perform Empirical Mode Decomposition as well as calculate the Hilbert Spectrum.
 
